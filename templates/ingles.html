@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Inglés con Kady · Realidáctica{% endblock %}
+{% block body_class %}app-page{% endblock %}
+{% block content %}
+<div class="app-shell">
+    <aside class="app-sidebar">
+        <a class="brand-lockup" href="{{ url_for('prin') }}"><span class="brand-mark">R</span><span>Realidáctica</span></a>
+        <nav class="app-nav" aria-label="Navegación del estudiante">
+            <a class="nav-link" href="{{ url_for('prin') }}"><span>⌂</span>Mis clases</a>
+            <a class="nav-link active" href="{{ url_for('clase_ingles') }}"><span>◎</span>Inglés con Kady</a>
+            <a class="nav-link" href="{{ url_for('portal_alumno') }}"><span>◇</span>Mi perfil</a>
+        </nav>
+        <div class="sidebar-footer"><form action="{{ url_for('logout') }}" method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="btn btn-ghost btn-block" type="submit">Cerrar sesión</button></form></div>
+    </aside>
+    <main class="app-main">
+        <header class="page-header"><div><span class="eyebrow">Clase interactiva</span><h1>Inglés con Kady</h1><p>Practica a tu ritmo. Kady conversa en inglés y te guía en español.</p></div><span class="status-badge">Luna</span></header>
+        <section class="panel english-panel" id="english-class" data-view="{{ 'voice' if english_level else 'quiz' }}" data-level="{{ english_level or '' }}" data-voice-ready="{{ 'true' if voice_configured else 'false' }}" data-ai-ready="{{ 'true' if ai_configured else 'false' }}">
+            <div id="english-quiz" {% if english_level %}hidden{% endif %}>
+                <span class="eyebrow">Antes de empezar</span><h2>Descubre tu nivel de inglés</h2>
+                <p class="muted">Responde seis preguntas breves de gramática. Puedes elegir «Aún no lo sé». Verás qué temas conviene practicar; el nivel es orientativo.</p>
+                <form id="english-quiz-form" data-version="{{ english_quiz.version }}">
+                    {% for question in english_quiz.preguntas %}
+                    <fieldset><legend>{{ question.id }}. {{ question.pregunta }}</legend>
+                        {% for key, text in question.opciones.items() %}<label><input type="radio" name="q{{ question.id }}" value="{{ key }}" required> {{ text }}</label>{% endfor %}
+                        <label><input type="radio" name="q{{ question.id }}" value="?"> Aún no lo sé</label>
+                    </fieldset>
+                    {% endfor %}
+                    <button class="btn btn-primary" type="submit">Ver mi nivel</button>
+                </form>
+            </div>
+            <div id="english-voice" {% if not english_level %}hidden{% endif %}>
+                <div class="english-session-heading"><span class="eyebrow">Tu espacio de conversación</span><span class="status-badge">Tu nivel · <span id="english-level">{{ english_level or '' }}</span></span></div>
+                <details class="diagnostic-saved" id="english-diagnostic-details" {% if not english_diagnostic %}hidden{% endif %}><summary>Mi diagnóstico y temas de práctica</summary><div id="english-diagnostic-summary"></div></details>
+                <div class="kady-companion" id="kady-visual" data-state="idle">
+                    <div class="kady-visual-stage" aria-hidden="true"><div class="kady-ambient"></div><canvas id="kady-canvas"></canvas></div>
+                    <div class="kady-presence"><span class="kady-state-dot" aria-hidden="true"></span><span id="kady-state-label">Lista para practicar</span></div>
+                    <h2 class="kady-name">Kady</h2>
+                    <p class="english-voice-status" id="english-status" role="status" aria-live="polite">Micrófono desactivado</p>
+                    <p class="kady-wake-caption">Una conversación empieza con <strong>“Hola Kady”</strong></p>
+                    <div class="english-actions">
+                        <button class="btn btn-primary kady-mic-button" id="english-start" type="button"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>Activar escucha</button>
+                        <button class="btn btn-secondary kady-mic-button" id="english-stop" type="button" hidden><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="7" width="3" height="10" rx="1"/><rect x="14" y="7" width="3" height="10" rx="1"/></svg>Detener escucha</button>
+                    </div>
+                    <label class="english-mic-meter" for="english-mic-level"><span>Tu micrófono</span><progress id="english-mic-level" max="100" value="0"></progress></label>
+                </div>
+                <div class="english-transcript-wrap"><span class="eyebrow">Lo que escucho</span><p id="english-transcript" aria-live="polite">Aquí aparecerá tu última frase.</p></div>
+                <div class="english-feedback" id="english-feedback" hidden><span class="eyebrow">Tu última práctica</span><p id="english-heard"></p><div class="english-feedback-grid"><div><h3>Consejo de Kady</h3><p id="english-tip"></p></div><div><h3>Ejemplo práctico</h3><p id="english-example"></p></div></div></div>
+                <div class="english-session-footer"><p class="english-instruction">Di “Hola Kady” y espera el sonido, o añade tu frase en el mismo turno. Después de su respuesta puedes seguir hablando. Tras 45 segundos de silencio, vuelve a saludarla.</p><button class="btn btn-ghost" id="english-retake" type="button">Repetir cuestionario</button></div>
+                <p class="chat-note">El navegador envía solo las frases donde detecta voz para transcribirlas. Requiere permiso del micrófono. Puedes detenerlo en cualquier momento.</p>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/diagnostics.js') }}" defer></script><script src="{{ url_for('static', filename='js/kady-visual.js') }}" defer></script><script src="{{ url_for('static', filename='js/english.js') }}" defer></script>{% endblock %}

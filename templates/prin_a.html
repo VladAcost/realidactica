@@ -27,29 +27,36 @@
 
         <section class="dashboard-grid">
             <div class="dashboard-content">
-                <div class="section-row"><div><span class="eyebrow">Continúa aprendiendo</span><h2>Tus clases</h2></div><span class="muted">3 espacios activos</span></div>
+                <div class="section-row"><div><span class="eyebrow">Continúa aprendiendo</span><h2>Tus clases</h2></div><span class="muted">4 espacios activos</span></div>
                 <div class="course-grid">
                     {% for key, subject in subjects.items() %}
                     <a class="course-card accent-{{ subject.accent }}" href="{{ url_for('clase', subject_key=key) }}">
                         <span class="course-index">0{{ loop.index }}</span>
-                        <div><span class="course-type">Clase activa</span><h3>{{ subject.title }}</h3><p>{{ subject.subtitle }}</p></div>
+                        <div><span class="course-type">Clase activa</span><h3>{{ subject.title }}</h3><p>{{ subject.subtitle }}</p><span class="course-diagnostic-label">{% if diagnostics.get(key) %}{{ diagnostics[key].nivel }} · {{ diagnostics[key].aciertos }}/{{ diagnostics[key].total }}{% else %}Diagnóstico pendiente · 6 preguntas{% endif %}</span></div>
                         <span class="course-arrow">↗</span>
                     </a>
                     {% endfor %}
+                    <a class="course-card accent-cyan" href="{{ url_for('clase_ingles') }}">
+                        <span class="course-index">04</span>
+                        <div><span class="course-type">Práctica interactiva</span><h3>Inglés con Kady</h3><p>Conversa en inglés y recibe consejos en español.</p><span class="course-diagnostic-label">{% if diagnostics.get('ingles') %}{{ diagnostics.ingles.nivel }} · {{ diagnostics.ingles.aciertos }}/{{ diagnostics.ingles.total }}{% else %}Diagnóstico pendiente · 6 preguntas{% endif %}</span></div>
+                        <span class="course-arrow">↗</span>
+                    </a>
                 </div>
 
                 <section class="panel learning-plan">
-                    <div class="section-row"><div><span class="eyebrow">Enfoque sugerido</span><h2>Plan de hoy</h2></div><a href="{{ url_for('encuesta') }}">Personalizar</a></div>
+                    <div class="section-row"><div><span class="eyebrow">Según tus respuestas</span><h2>Tu siguiente repaso</h2></div></div>
                     <div class="plan-list">
-                        <div class="plan-item"><span class="plan-status complete">✓</span><div><strong>Revisar material reciente</strong><p>10 minutos · repaso activo</p></div><span>Completado</span></div>
-                        <div class="plan-item"><span class="plan-status">02</span><div><strong>Resolver una prueba corta</strong><p>5 preguntas · comprensión</p></div><span>Siguiente</span></div>
-                        <div class="plan-item"><span class="plan-status">03</span><div><strong>Preguntar una duda a Kady</strong><p>Tutoría personalizada</p></div><span>Pendiente</span></div>
+                        {% for key in ['calculo', 'frameworks', 'liderazgo', 'ingles'] %}
+                        {% set result = diagnostics.get(key) %}
+                        <div class="plan-item"><span class="plan-status">0{{ loop.index }}</span><div><strong>{{ 'Inglés con Kady' if key == 'ingles' else subjects[key].title }}</strong><p>{% if result %}{{ result.reforzar | join(' · ') if result.reforzar else 'Buen manejo inicial. Continúa practicando con Kady.' }}{% else %}Completa el diagnóstico para encontrar tus temas de repaso.{% endif %}</p></div><a href="{{ url_for('clase_ingles') if key == 'ingles' else url_for('clase', subject_key=key) }}">{{ 'Repasar' if result else 'Comenzar' }}</a></div>
+                        {% endfor %}
                     </div>
+                    <p class="chat-note">Un cuestionario breve orienta tu práctica; no sustituye una evaluación completa.</p>
                 </section>
             </div>
 
             <aside class="panel chat-panel" data-chat-panel>
-                <div class="chat-heading"><span class="ai-orb">K</span><div><span class="eyebrow">Tutoría con IA</span><h2>Kady</h2></div><span class="status-badge">Luna</span></div>
+                <div class="chat-heading"><span class="ai-orb">K</span><div><span class="eyebrow">Tutoría con IA</span><h2>Kady</h2></div><span class="status-badge">Terra</span></div>
                 <div class="chat-history" id="chat-history" aria-live="polite">
                     <div class="chat-message assistant"><p>Hola, {{ session.user_name }}. ¿Qué concepto quieres comprender hoy?</p></div>
                 </div>

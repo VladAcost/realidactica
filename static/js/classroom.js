@@ -47,6 +47,11 @@ document.addEventListener("DOMContentLoaded", () => {
     askTutor(input.value);
   });
 
+  document.addEventListener("diagnostic:review", (event) => {
+    askTutor(event.detail.prompt);
+    responseBox.scrollIntoView({behavior: "smooth", block: "center"});
+  });
+
   document.querySelectorAll("[data-prompt]").forEach((chip) => {
     chip.addEventListener("click", () => askTutor(chip.dataset.prompt || ""));
   });
