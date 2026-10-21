@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundamentos Matemáticos - Herramienta Educativa</title>
+    
+    <!-- Bootstrap 5 CSS para diseño responsivo y modo oscuro -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts para una tipografía más legible -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Plotly.js para las gráficas 2D y 3D -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+    <!-- Math.js para evaluar expresiones algebraicas y operaciones con matrices de forma segura -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.min.js"></script>
+
+    <style>
+        /* Estilos generales y paleta de colores */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Barra de navegación superior con gradiente */
+        .navbar-custom {
+            background: linear-gradient(90deg, #1f1c2c 0%, #928dab 100%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        /* Contenedor principal flex para llenar la pantalla */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        /* Estilo del contenido de las pestañas */
+        .tab-content {
+            flex: 1;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-top: none;
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+            padding: 1.5rem;
+            overflow-y: auto; /* Permitir scroll vertical si el contenido es largo */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-pane {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Diseño de las pestañas (Tabs) */
+        .nav-tabs .nav-link {
+            color: #aaa;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: #1e1e1e;
+            color: #4facfe;
+            border-color: #333 #333 #1e1e1e;
+        }
+
+        /* Contenedores para las gráficas Plotly */
+        .plot-container-wrapper {
+            flex: 1;
+            width: 100%;
+            min-height: 400px;
+            background-color: #0d0d0d;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 1rem;
+            position: relative;
+            border: 1px solid #333;
+        }
+
+        /* Cajas de texto personalizadas */
+        .custom-input {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+        
+        .custom-input:focus {
+            background-color: #333;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
+            color: white;
+        }
+
+        /* Botón de acción principal */
+        .btn-brand {
+            background-color: #4facfe;
+            color: #121212;
+            border: none;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .btn-brand:hover {
+            background-color: #3ea1f4;
+            color: #000;
+            transform: translateY(-1px);
+        }
+
+        /* Caja de salida para resultados de matrices */
+        .matrix-result-box {
+            background-color: #0d0d0d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #a8ff60; /* Color estilo terminal (verde) */
+            min-height: 150px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        /* Estilo para las alertas de tutorial */
+        .tutorial-alert {
+            background-color: rgba(79, 172, 254, 0.1);
+            border-left: 5px solid #4facfe;
+            border-radius: 0.5rem;
+            color: #e0e0e0;
+        }
+        
+        .tutorial-alert code {
+            background-color: rgba(255,255,255,0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #4facfe;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Encabezado de la aplicación -->
+    <nav class="navbar navbar-dark navbar-custom py-2 shadow-sm">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1 d-flex align-items-center fw-bold">
+                <!-- Icono de calculadora -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-calculator me-2" viewBox="0 0 16 16">
+                    <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/>
+                    <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-3z"/>
+                </svg>
+                Herramienta Educativa Matemática
+            </span>
+        </div>
+    </nav>
+
+    <!-- Área Principal -->
+    <div class="main-content container-fluid">
+        
+        <!-- Pestañas de Navegación -->
+        <ul class="nav nav-tabs" id="mathTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-2d-btn" data-bs-toggle="tab" data-bs-target="#tab-2d" type="button" role="tab">Gráficas 2D</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-3d-btn" data-bs-toggle="tab" data-bs-target="#tab-3d" type="button" role="tab">Superficies 3D</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-matrix-btn" data-bs-toggle="tab" data-bs-target="#tab-matrix" type="button" role="tab">Álgebra y Matrices</button>
+            </li>
+        </ul>
+        
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="mathTabsContent">
+            
+            <!-- ===================== PESTAÑA 1: Gráficas 2D ===================== -->
+            <div class="tab-pane fade show active" id="tab-2d" role="tabpanel">
+                
+                <!-- TUTORIAL 2D -->
+                <div class="alert tutorial-alert shadow-sm mb-3" role="alert">
+                    <h5 class="alert-heading fw-bold d-flex align-items-center">
+                        <span class="me-2 text-info fs-4">ℹ️</span> Guía de uso: Gráficas 2D
+                    </h5>
+                    <p class="mb-1">
+                        Escribe la función matemática utilizando la variable <strong>x</strong>. Puedes usar potencias (<code>^</code>), multiplicaciones (<code>*</code>) y funciones trigonométricas. 
+                        Ejemplos válidos: <code>sin(x)</code>, <code>x^2 + 2*x - 5</code>, <code>cos(x)*x</code>.
+                    </p>
+                    <hr class="border-secondary opacity-25 my-2">
+                    <p class="mb-0 small">
+                        <strong>Interacción con la gráfica:</strong> Haz clic y arrastra para moverte libremente (pan). Selecciona un área o usa la rueda del ratón para hacer acercamientos (zoom). Haz doble clic en la gráfica para restaurar la vista original.
+                    </p>
+                </div>
+
+                <div class="row gx-3 align-items-center">
+                    <div class="col-md-9">
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark text-light border-secondary fw-bold">y = f(x) =</span>
+                            <input type="text" id="eq-2d" class="form-control custom-input" value="sin(x)" placeholder="Ej. x^2 - 4">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mt-2 mt-md-0">
+                        <button id="btn-plot-2d" class="btn btn-brand w-100">Graficar 2D</button>
+                    </div>
+                </div>
+                
+                <div id="error-2d" class="alert alert-danger mt-3 d-none py-2 border-danger"></div>
+                <div class="plot-container-wrapper" id="plot-2d"></div>
+            </div>
+
+            <!-- ===================== PESTAÑA 2: Superficies 3D ===================== -->
+            <div class="tab-pane fade" id="tab-3d" role="tabpanel">
+                
+                <!-- TUTORIAL 3D -->
+                <div class="alert tutorial-alert shadow-sm mb-3" role="alert">
+                    <h5 class="alert-heading fw-bold d-flex align-items-center">
+                        <span class="me-2 text-info fs-4">ℹ️</span> Guía de uso: Superficies 3D
+                    </h5>
+                    <p class="mb-1">
+                        Escribe tu función utilizando ambas variables espaciales: <strong>x</strong> y <strong>y</strong>.
+                        Ejemplos de superficies: Paraboloide <code>x^2 + y^2</code>, Silla de montar <code>x^2 - y^2</code>, Ondas <code>sin(x) * cos(y)</code>.
+                    </p>
+                    <hr class="border-secondary opacity-25 my-2">
+                    <p class="mb-0 small">
+                        <strong>Interacción con la gráfica:</strong> Haz <strong>clic izquierdo y arrastra</strong> para rotar la figura y verla desde cualquier ángulo. Usa la rueda del ratón para acercar/alejar. Haz clic derecho y arrastra para desplazar el centro de visión.
+                    </p>
+                </div>
+
+                <div class="row gx-3 align-items-center">
+                    <div class="col-md-9">
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark text-light border-secondary fw-bold">z = f(x, y) =</span>
+                            <input type="text" id="eq-3d" class="form-control custom-input" value="sin(x) * cos(y)" placeholder="Ej. x^2 - y^2">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mt-2 mt-md-0">
+                        <button id="btn-plot-3d" class="btn btn-brand w-100">Graficar 3D</button>
+                    </div>
+                </div>
+
+                <div id="error-3d" class="alert alert-danger mt-3 d-none py-2 border-danger"></div>
+                <div class="plot-container-wrapper" id="plot-3d"></div>
+            </div>
+
+            <!-- ===================== PESTAÑA 3: Álgebra y Matrices ===================== -->
+            <div class="tab-pane fade" id="tab-matrix" role="tabpanel">
+                
+                <!-- TUTORIAL MATRICES -->
+                <div class="alert tutorial-alert shadow-sm mb-3" role="alert">
+                    <h5 class="alert-heading fw-bold d-flex align-items-center">
+                        <span class="me-2 text-info fs-4">ℹ️</span> Guía de uso: Matrices
+                    </h5>
+                    <p class="mb-1">
+                        Ingresa una matriz escribiéndola entre corchetes <code>[]</code>. Las filas también van entre corchetes, y los elementos se separan por comas.
+                        Ejemplo de una matriz 2x2: <code>[[1, 2], [3, 4]]</code>.
+                    </p>
+                    <hr class="border-secondary opacity-25 my-2">
+                    <p class="mb-0 small">
+                        <strong>Interacción:</strong> Simplemente escribe tu matriz en la caja de abajo y haz clic en los botones "Calcular Determinante" o "Calcular Inversa" para obtener el resultado instantáneamente.
+                    </p>
+                </div>
+
+                <div class="row h-100 flex-grow-1">
+                    <div class="col-md-5 d-flex flex-column">
+                        <label class="form-label text-light fw-bold">Matriz de Entrada (A)</label>
+                        <textarea id="matrix-input" class="form-control custom-input mb-3" rows="4" placeholder="Ej. [[1, 2], [3, 4]]">[[1, 2], [3, 4]]</textarea>
+                        
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            <button id="btn-det" class="btn btn-brand w-100">Calcular Determinante</button>
+                            <button id="btn-inv" class="btn btn-outline-info w-100">Calcular Matriz Inversa</button>
+                        </div>
+
+                        <div id="error-matrix" class="alert alert-danger mt-auto d-none py-2 border-danger text-break"></div>
+                    </div>
+                    
+                    <div class="col-md-7 d-flex flex-column mt-3 mt-md-0">
+                        <label class="form-label text-light fw-bold">Resultado</label>
+                        <div id="matrix-result" class="matrix-result-box flex-grow-1 d-flex flex-column">
+                            <span class="text-secondary mb-2">// El resultado aparecerá aquí</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle para funcionalidad de Pestañas (Tabs) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // --- GESTIÓN DE INTERFAZ Y PLOTLY RESIZE ---
+            // Plotly calcula su tamaño en base al contenedor visible. Cuando cambiamos de pestaña, 
+            // los contenedores ocultos tienen tamaño 0. Por esto, obligamos a Plotly a redimensionar 
+            // los gráficos cada vez que el usuario entra a una nueva pestaña.
+            const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabElements.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', event => {
+                    const targetId = event.target.getAttribute('data-bs-target');
+                    if (targetId === '#tab-2d') {
+                        Plotly.Plots.resize('plot-2d');
+                    }
+                    if (targetId === '#tab-3d') {
+                        Plotly.Plots.resize('plot-3d');
+                    }
+                });
+            });
+
+            // Redimensionar si la ventana cambia de tamaño
+            window.addEventListener('resize', () => {
+                if(document.getElementById('tab-2d').classList.contains('active')) Plotly.Plots.resize('plot-2d');
+                if(document.getElementById('tab-3d').classList.contains('active')) Plotly.Plots.resize('plot-3d');
+            });
+
+
+            // =========================================================
+            // LÓGICA PARA PESTAÑA 1: GRÁFICAS 2D
+            // =========================================================
+            const eq2dInput = document.getElementById('eq-2d');
+            const btnPlot2d = document.getElementById('btn-plot-2d');
+            const error2d = document.getElementById('error-2d');
+
+            function draw2D() {
+                try {
+                    const exprStr = eq2dInput.value;
+                    // Compilar la expresión matemática con math.js para mayor seguridad y velocidad
+                    const compiled = math.compile(exprStr);
+                    
+                    // Generar dominio (Eje X): Rango de -10 a 10 con incremento de 0.05 para curvas suaves
+                    const xValues = math.range(-10, 10, 0.05).toArray();
+                    
+                    // Generar imagen (Eje Y)
+                    const yValues = xValues.map(x => {
+                        let y = compiled.evaluate({x: x});
+                        // Filtro de asíntotas y divisiones por 0 para evitar picos distorsionados en la gráfica
+                        if(Math.abs(y) > 500 || !isFinite(y)) return null; 
+                        return y;
+                    });
+
+                    // Configuración de los datos de la gráfica Plotly
+                    const trace = {
+                        x: xValues,
+                        y: yValues,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#4facfe', width: 3 },
+                        name: 'f(x)'
+                    };
+
+                    // Configuración visual del plano cartesiano 2D
+                    const layout = {
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        margin: { l: 40, r: 20, b: 40, t: 20 },
+                        xaxis: { title: 'Eje X (x)', gridcolor: '#333', zerolinecolor: '#888' },
+                        yaxis: { title: 'Eje Y (f(x))', gridcolor: '#333', zerolinecolor: '#888' },
+                        font: { color: '#fff' }
+                    };
+
+                    // Renderizar
+                    Plotly.react('plot-2d', [trace], layout, {responsive: true, displayModeBar: false});
+                    error2d.classList.add('d-none'); // Ocultar mensaje de error
+                } catch (err) {
+                    error2d.textContent = "⚠ Error en la expresión matemática. Verifica que la sintaxis sea correcta (ej: usa * para multiplicar).";
+                    error2d.classList.remove('d-none');
+                }
+            }
+
+            // Eventos 2D
+            btnPlot2d.addEventListener('click', draw2D);
+            eq2dInput.addEventListener('keypress', e => { if(e.key === 'Enter') draw2D(); });
+
+
+            // =========================================================
+            // LÓGICA PARA PESTAÑA 2: SUPERFICIES 3D
+            // =========================================================
+            const eq3dInput = document.getElementById('eq-3d');
+            const btnPlot3d = document.getElementById('btn-plot-3d');
+            const error3d = document.getElementById('error-3d');
+            
+            function draw3D() {
+                try {
+                    // Tamaño de la cuadrícula de renderizado
+                    const gridSize = 40; 
+                    const min = -5;
+                    const max = 5;
+                    const step = (max - min) / gridSize;
+                    
+                    const compiled = math.compile(eq3dInput.value);
+                    let xArr = [], yArr = [], zArr = [];
+
+                    // Generar Ejes X e Y
+                    for (let i = 0; i <= gridSize; i++) {
+                        xArr.push(min + i * step);
+                        yArr.push(min + i * step);
+                    }
+
+                    // Generar Coordenadas Z (Altura de la superficie)
+                    for (let i = 0; i <= gridSize; i++) {
+                        let zRow = [];
+                        for (let j = 0; j <= gridSize; j++) {
+                            // Evaluar pasando x e y
+                            let zVal = compiled.evaluate({x: xArr[j], y: yArr[i]});
+                            // Si el resultado es infinito/indefinido (ej. división por 0), marcamos null para no romper la malla
+                            if(!isFinite(zVal) || isNaN(zVal)) zVal = null;
+                            zRow.push(zVal);
+                        }
+                        zArr.push(zRow);
+                    }
+
+                    // Trazado de Plotly. Obligamos Colorscale Viridis como predeterminado
+                    const trace = {
+                        z: zArr,
+                        x: xArr,
+                        y: yArr,
+                        type: 'surface',
+                        colorscale: 'Viridis', 
+                        showscale: false // Ocultar la barra de color lateral para un look más limpio
+                    };
+
+                    const layout = {
+                        autosize: true,
+                        margin: { l: 0, r: 0, b: 0, t: 0 },
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        scene: {
+                            xaxis: { title: 'X', gridcolor: '#444', zerolinecolor: '#888' },
+                            yaxis: { title: 'Y', gridcolor: '#444', zerolinecolor: '#888' },
+                            zaxis: { title: 'Z', gridcolor: '#444', zerolinecolor: '#888' },
+                            bgcolor: '#0d0d0d'
+                        },
+                        font: { color: '#fff' }
+                    };
+
+                    Plotly.react('plot-3d', [trace], layout, {responsive: true, displayModeBar: false});
+                    error3d.classList.add('d-none'); // Ocultar error
+                } catch (err) {
+                    error3d.textContent = "⚠ Error en la función 3D. Asegúrate de incluir las variables 'x' e 'y' correctamente.";
+                    error3d.classList.remove('d-none');
+                }
+            }
+
+            // Eventos 3D
+            btnPlot3d.addEventListener('click', draw3D);
+            eq3dInput.addEventListener('keypress', e => { if(e.key === 'Enter') draw3D(); });
+
+
+            // =========================================================
+            // LÓGICA PARA PESTAÑA 3: MATRICES
+            // =========================================================
+            const matrixInput = document.getElementById('matrix-input');
+            const btnDet = document.getElementById('btn-det');
+            const btnInv = document.getElementById('btn-inv');
+            const matrixResult = document.getElementById('matrix-result');
+            const errorMatrix = document.getElementById('error-matrix');
+
+            // Función genérica para manejar los botones de matrices
+            function calculateMatrixOperation(operationName, mathFunction) {
+                try {
+                    const matStr = matrixInput.value.trim();
+                    if(!matStr) throw new Error("La matriz no puede estar vacía.");
+
+                    // 1. Convertir el texto ingresado a un arreglo matemático válido usando math.evaluate
+                    // Esto es más seguro que un simple JSON.parse porque permite fracciones de mathjs y sintaxis flexible
+                    const matrixData = math.evaluate(matStr);
+                    
+                    // 2. Ejecutar la función solicitada (Determinante o Inversa)
+                    const result = math[mathFunction](matrixData);
+                    
+                    // 3. Formatear la salida para que sea legible
+                    let formattedResult;
+                    
+                    if (mathFunction === 'inv') {
+                        // Si es matriz, formatea el arreglo (precision para evitar muchos decimales)
+                        formattedResult = math.format(result, {precision: 5});
+                        // Hacer que las matrices se vean apiladas (saltos de línea)
+                        formattedResult = formattedResult.replace(/\], \[/g, "],\n [");
+                    } else {
+                        // Si es un escalar (determinante)
+                        formattedResult = math.format(result, {precision: 5});
+                    }
+
+                    // Mostrar resultado con formato en pantalla
+                    matrixResult.innerHTML = `<span class="text-secondary">Matriz A:</span><br>${matStr}<br><br><span class="text-white">${operationName}(A) =</span><br><strong>${formattedResult}</strong>`;
+                    
+                    // Ocultar cualquier error anterior
+                    errorMatrix.classList.add('d-none');
+                } catch (err) {
+                    // Mostrar caja de error al usuario, evitando que la app se rompa
+                    errorMatrix.textContent = `⚠ No se pudo procesar. Asegúrate de que los corchetes coincidan y que la matriz sea válida para la operación (ej. matriz cuadrada). \nDetalles: ${err.message}`;
+                    errorMatrix.classList.remove('d-none');
+                    matrixResult.innerHTML = `<span class="text-danger">Error en el cálculo.</span>`;
+                }
+            }
+
+            // Asignar los eventos a los botones específicos
+            btnDet.addEventListener('click', () => calculateMatrixOperation("Determinante", "det"));
+            btnInv.addEventListener('click', () => calculateMatrixOperation("Inversa", "inv"));
+
+
+            // --- Inicialización: Dibujar gráficas por defecto al cargar la página ---
+            draw2D();
+            draw3D();
+        });
+    </script>
+</body>
+</html>
