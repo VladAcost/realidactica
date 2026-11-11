@@ -146,6 +146,15 @@ class ExperienceTests(TestCase):
         self.assertTrue(topics[0]['diagnostico'])
         self.assertEqual(self.post('/api/algebra/intentos',{'tema':'expresiones','modo':'practica','nivel':'basico','tipo':'resolver'}).status_code,200)
 
+    def test_sign_in_csp_allows_google_redirect_without_expanding_other_pages(self):
+        for path in ('/login', '/auth/google'):
+            policy=self.client.get(path).headers['Content-Security-Policy']
+            self.assertIn("form-action 'self' https://accounts.google.com;", policy)
+            self.assertIn("script-src 'self'",policy)
+        policy=self.client.get('/registro').headers['Content-Security-Policy']
+        self.assertIn("form-action 'self';",policy)
+        self.assertNotIn('accounts.google.com',policy)
+
     def test_google_rejects_invalid_state_before_database_access(self):
         self.cursor.reset_mock()
         self.assertEqual(self.client.get('/auth/google/callback?state=bad&code=bad').status_code,302)

@@ -318,6 +318,12 @@ def add_security_headers(response: Any) -> Any:
             "form-action 'self'; frame-ancestors 'none'; frame-src 'self' https://drive.google.com; "
             "img-src 'self' data:; media-src 'self' blob:; object-src 'none'; script-src 'self'; style-src 'self'"
         )
+        # Chrome also checks cross-origin redirects after a form submission.
+        # Permit the Google authorization hop only on the two sign-in responses.
+        if request.path in {"/login", "/auth/google"}:
+            response.headers["Content-Security-Policy"] = response.headers["Content-Security-Policy"].replace(
+                "form-action 'self';", "form-action 'self' https://accounts.google.com;"
+            )
         # Plotly generates chart styles at runtime. Keep this exception limited
         # to math classrooms; scripts remain restricted to local project files.
         if request.path in {"/clase/calculo", "/algebra"}:
