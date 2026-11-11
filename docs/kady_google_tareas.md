@@ -1,12 +1,27 @@
 # Kady, Google y tareas
 
-Cambios locales: Inicio sin el panel fijo, Kady flotante en todas las pantallas con sesión, navegación por órdenes escritas o grabadas, bienvenida por rol, diagnóstico inicial de 12 preguntas y tareas por grupo con entregas de texto.
+Kady flotante acompaña las pantallas con sesión. Cada pestaña selecciona su propia tutora, con historial independiente por cuenta, tareas de su materia y navegación controlada. Se conservan el diagnóstico inicial de álgebra de 12 preguntas y las tareas por grupo con entregas de texto.
+
+## Tutoras por pestaña
+
+- **Kady Inicio:** orientación general, motivación, pendientes de todas las materias, perfil, cuestionario de aprendizaje y navegación entre pestañas.
+- **Kady Álgebra:** explicaciones, ejercicios y tareas de álgebra.
+- **Kady Cálculo:** integrales y sus bases, actividades y tareas de cálculo.
+- **Kady JavaScript:** programación, frameworks y material de desarrollo web.
+- **Kady Liderazgo:** liderazgo, comunicación y trabajo en equipo.
+- **Kady Inglés:** aprendizaje y práctica de inglés. La conversación oral dedicada de inglés conserva su funcionamiento.
+
+`kady_agents.py` define los ámbitos. El servidor valida el identificador de tutora; no acepta instrucciones del navegador para ampliar su alcance. Las otras materias se remiten a Inicio. Cada conversación conserva hasta 40 mensajes por cuenta y tutora, muestra los 16 últimos y usa los 12 últimos como contexto para el modelo. Las peticiones a OpenAI usan `store=False`.
+
+Los avisos de presentación se registran en el servidor y se reclaman una sola vez, incluso entre pestañas. Restaurar un historial no vuelve a leerlo en voz alta. Las celebraciones automáticas se deduplican en el navegador por cuenta y tutora; el alumno puede pedir que se repitan.
+
+En la primera visita de un alumno, Kady da una bienvenida breve y explica Realidáctica con palabras sencillas. Lo lleva a **Mi estilo de aprendizaje** al terminar la voz, o tras una pausa si no hay reproducción. Un enlace permite abrirlo de inmediato; cerrar o interactuar cancela el traslado automático. Los docentes reciben una bienvenida de su rol sin este traslado.
 
 ## Activar la voz
 
-En `.env`, coloca `ELEVENLABS_API_KEY`. Selecciona en ElevenLabs una voz femenina de español de México con tono cálido y tranquilo, y coloca su identificador en `KADY_SPANISH_VOICE_ID`. La selección automática prioriza voces femeninas disponibles en español con referencias a México y tono calmado; conviene escuchar la elegida antes de usarla con alumnos. La clave se usa solo en el servidor. El ritmo se configura a 0.94 con Multilingual v2. No se ha podido escuchar ni verificar una voz real porque falta la clave local.
+En `.env`, coloca `ELEVENLABS_API_KEY`. Selecciona en ElevenLabs una voz femenina de español de México con tono cálido y tranquilo, y coloca su identificador en `KADY_SPANISH_VOICE_ID`. La selección automática prioriza voces femeninas disponibles en español con referencias a México y tono calmado. La clave se usa solo en el servidor. El ritmo se configura a 0.94 con Multilingual v2. En Railway la voz y la conversación con OpenAI ya están configuradas; el usuario confirmó que puede escuchar y conversar por escrito y por voz.
 
-La reproducción comienza cuando el navegador la permite; si la bloquea, Kady muestra un reproductor. Se puede silenciar y detener la voz. El micrófono pide permiso al pulsarlo, graba hasta 30 segundos y envía la grabación a ElevenLabs; al cerrar la ventana se detiene la captura. Inglés conserva su conversación dedicada.
+La reproducción comienza cuando el navegador la permite; si la bloquea, Kady muestra un reproductor. Se puede silenciar y detener la voz. El nuevo botón **Hablar** muestra nivel, tiempo y estados de escucha. El navegador solicita cancelación de eco, reducción de ruido y ajuste de ganancia; conserva el audio completo y espera 2,2 segundos de pausa antes de enviarlo a ElevenLabs Scribe v2. **Terminar** permite enviarlo manualmente. El límite es de 60 segundos; 12 segundos sin detectar voz cancelan la captura sin pedir transcripción. Cerrar la ventana cancela la captura o la transcripción pendiente. La última frase entendida queda visible para comprobarla.
 
 ## Activar Google
 
@@ -22,7 +37,9 @@ El registro nuevo como alumno queda activo; como docente queda pendiente. Las cu
 
 ## Tareas y grupos
 
-Desde **Tareas y entregas**, un docente elige un grupo, título, instrucciones y fecha. Puede inscribir una cuenta estudiantil activa por su correo en un grupo existente. Los grupos se crean desde **Grupos**. Como en la gestión académica existente, los docentes comparten el catálogo de grupos; las tareas y sus entregas sí se consultan por docente creador.
+Desde **Tareas y entregas**, un docente elige un grupo, materia, título, instrucciones y fecha. Puede inscribir una cuenta estudiantil activa por su correo en un grupo existente. Los grupos se crean desde **Grupos**. Como en la gestión académica existente, los docentes comparten el catálogo de grupos; las tareas y sus entregas sí se consultan por docente creador.
+
+Las tareas existentes se conservan con materia **General**. Su docente puede cambiar la materia desde la misma tarjeta. Inicio consulta todos los pendientes autorizados; cada tutora recibe exclusivamente los de su materia. El filtro de Tareas permite revisar una materia y abre la tutora correspondiente.
 
 Las cuentas locales de demostración comparten un grupo ficticio para probar la creación y entrega de tareas sin MySQL. No se mezclan con los grupos reales.
 
@@ -36,7 +53,7 @@ El diagnóstico inicial cubre lenguaje algebraico, signos, suma y resta, y multi
 
 ## Persistencia y verificación
 
-`EXPERIENCE_DB_PATH` guarda bienvenida, tareas y entregas (por defecto `instance/experience.sqlite3`). `ALGEBRA_DB_PATH` guarda evaluaciones. Configura ambos en un volumen persistente y respáldalos; para varias instancias migra a almacenamiento compartido. Las identidades Google, usuarios y membresías de grupo están en MySQL.
+`EXPERIENCE_DB_PATH` guarda bienvenida, avisos, historiales por tutora, tareas y entregas (por defecto `instance/experience.sqlite3`). La actualización crea las tablas de memoria y avisos y añade la columna de materia sin borrar tareas existentes. `ALGEBRA_DB_PATH` guarda evaluaciones. Configura ambos en un volumen persistente y respáldalos; para varias instancias migra a almacenamiento compartido. Las identidades Google, usuarios y membresías de grupo están en MySQL.
 
 Pruebas: `.venv/Scripts/python.exe -m unittest discover -s tests -v` y `node --test tests/test_english_voice.js tests/test_math_widget.js tests/test_kady.js`.
 
@@ -45,7 +62,7 @@ Referencias oficiales: [ElevenLabs: voz](https://elevenlabs.io/docs/overview/cap
 
 ## Configuración concreta del proyecto Railway existente
 
-Revisión del 11 de noviembre de 2026: existe el proyecto `realidactica`, con los servicios `realidactica-web` y `MySQL` en `production`. MySQL ya tiene su volumen. Se prepara un volumen nuevo para el web en `/app/instance`, destinado a progreso, diagnósticos y tareas. La preparación permanece pendiente de publicación. Las dos variables de Google ya están presentes en Railway; sus valores no fueron leídos.
+Revisión del 11 de noviembre de 2026: el proyecto `realidactica` tiene los servicios `realidactica-web` y `MySQL` en `production`. Cada servicio tiene su volumen. El del web está montado en `/app/instance` para progreso, diagnósticos, tareas e historiales. Google, OpenAI y ElevenLabs ya están configurados en Railway. Los valores secretos no se incluyen en este documento.
 
 - Proyecto: https://railway.com/project/f233a6f6-ba76-4331-bc6b-ea5c7b6e9498
 - Dirección pública: https://realidactica-web-production.up.railway.app
@@ -64,11 +81,11 @@ Revisión del 11 de noviembre de 2026: existe el proyecto `realidactica`, con lo
 
 ### Activación posterior en Railway
 
-En el servicio `realidactica-web`, las variables `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` ya existen; se añade `GOOGLE_APPROVER_EMAILS=realidactica@gmail.com`. `APP_BASE_URL` debe coincidir con `https://realidactica-web-production.up.railway.app`. Las claves `OPENAI_API_KEY` y `ELEVENLABS_API_KEY` tampoco figuran entre las variables actuales del servicio; habrá que configurarlas de forma privada para activar conversación y voz. `KADY_SPANISH_VOICE_ID` fijará la voz femenina mexicana elegida.
+En el servicio `realidactica-web` están configuradas `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_APPROVER_EMAILS=realidactica@gmail.com`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY` y `KADY_SPANISH_VOICE_ID`. `APP_BASE_URL` coincide con `https://realidactica-web-production.up.railway.app`. Las claves se mantienen en las variables privadas del servidor.
 
 Antes de publicar la nueva versión, se debe revisar la compatibilidad de las tablas existentes y respaldar MySQL. El inicializador verifica primero las columnas de las tablas existentes. Si faltan columnas requeridas o el identificador de usuario es incompatible con el vínculo Google, detiene el arranque antes de crear tablas y pide una migración revisada. Crea tablas que no existan; no transforma por sí solo una tabla antigua.
 
-Para el estado SQLite de la versión actual se prepara un volumen de 1 GB del web en `/app/instance`, con una sola réplica y estas rutas: `DIAGNOSTICS_DB_PATH=/app/instance/diagnostics.sqlite3`, `ALGEBRA_DB_PATH=/app/instance/algebra.sqlite3` y `EXPERIENCE_DB_PATH=/app/instance/experience.sqlite3`. `PERSISTENT_DATA_DIR=/app/instance` y `RAILWAY_RUN_UID=0` permiten al arranque ajustar únicamente los permisos de sus rutas conocidas; luego el proceso baja a UID 10001 antes de conectar MySQL o iniciar Gunicorn. El volumen del web es independiente del que ya usa MySQL.
+Para el estado SQLite se utiliza un volumen de 1 GB del web en `/app/instance`, con una sola réplica y estas rutas: `DIAGNOSTICS_DB_PATH=/app/instance/diagnostics.sqlite3`, `ALGEBRA_DB_PATH=/app/instance/algebra.sqlite3` y `EXPERIENCE_DB_PATH=/app/instance/experience.sqlite3`. `PERSISTENT_DATA_DIR=/app/instance` y `RAILWAY_RUN_UID=0` permiten al arranque ajustar únicamente los permisos de sus rutas conocidas; luego el proceso baja a UID 10001 antes de conectar MySQL o iniciar Gunicorn. El volumen del web es independiente del que ya usa MySQL.
 
 `UPLOAD_FOLDER` conserva su configuración actual. Antes de trasladar los PDF docentes a almacenamiento permanente se deben copiar los archivos del servicio activo y revisar sus rutas; esa migración de archivos no forma parte del volumen de tareas.
 

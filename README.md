@@ -40,8 +40,10 @@ Consulta `SECURITY_AUDIT.md`. Antes de desplegar, rota las credenciales que apar
 
 Ejecuta `.venv\Scripts\python.exe -m unittest discover -s tests -v` para las rutas del servidor y `node --test tests/test_english_voice.js` para activación, conversación continua, pausas, reintentos y cancelación de la escucha. Estas pruebas usan respuestas simuladas y no consumen créditos de las API.
 
-## Kady global, acceso con Google y tareas
+## Kady por materia, acceso con Google y tareas
 
-La burbuja de Kady acompaña las pantallas con sesión; su ventana y burbuja se pueden mover con el ratón o las flechas. Incluye navegación por órdenes, bienvenida por rol, voz en español mediante ElevenLabs y consulta de tareas asignadas. Álgebra añade un diagnóstico inicial de 12 preguntas que puede acreditar los cuatro primeros temas. Los docentes pueden crear tareas por grupo y revisar entregas de texto; las nuevas cuentas docentes de Google esperan aprobación.
+La burbuja de Kady acompaña las pantallas con sesión; su ventana y burbuja se pueden mover con el ratón o las flechas. Inicio orienta, motiva, consulta pendientes y permite cambiar de pestaña. Álgebra, cálculo, JavaScript, liderazgo e inglés tienen tutoras con ámbito e historial independientes. Los avisos ya vistos no se repiten automáticamente y la primera bienvenida del alumno lo conduce a Mi estilo de aprendizaje.
+
+El botón Hablar incorpora cancelación de eco, reducción de ruido, indicador de volumen y envío tras una pausa de 2,2 segundos, con opción de terminar manualmente. La voz en español usa ElevenLabs. Los docentes clasifican las tareas por materia para que cada tutora consulte sus pendientes; las tareas anteriores se conservan como General y se pueden reclasificar. Álgebra mantiene su diagnóstico de 12 preguntas, que puede acreditar los cuatro primeros temas. Las nuevas cuentas docentes de Google esperan aprobación.
 
 Consulta [activación, persistencia y alcance](docs/kady_google_tareas.md). La voz y el acceso con Google requieren configurar las credenciales privadas del servidor. La migración `migrations/002_google_identity.sql` añade el vínculo de cuentas Google a bases existentes.

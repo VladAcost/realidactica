@@ -661,6 +661,11 @@ def guardar_resultado() -> Any:
         mysql.connection.rollback()
         app.logger.exception("No se pudo guardar la encuesta")
         return jsonify({"error": "No se pudo guardar el resultado."}), 500
+    import experience
+    try:
+        experience.claim_notice(app.config['EXPERIENCE_DB_PATH'], _diagnostic_student(), 'inicio', 'learning-complete')
+    except (sqlite3.Error, OSError):
+        app.logger.warning('El perfil se guardó; el aviso de Kady se actualizará al consultar MySQL.')
     return jsonify({"mensaje": "Resultado guardado."})
 
 

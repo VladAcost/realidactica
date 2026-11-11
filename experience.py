@@ -21,6 +21,22 @@ def database(path):
           response TEXT NOT NULL, submitted TEXT NOT NULL, PRIMARY KEY(task, student));
         CREATE INDEX IF NOT EXISTS task_groups ON tasks(group_id, due);
         ''')
+        if 'subject' not in {row[1] for row in db.execute('PRAGMA table_info(tasks)')}:
+            try:
+                db.execute("ALTER TABLE tasks ADD COLUMN subject TEXT NOT NULL DEFAULT 'general'")
+                db.commit()
+            except sqlite3.OperationalError:
+                if 'subject' not in {row[1] for row in db.execute('PRAGMA table_info(tasks)')}:
+                    raise
+        db.executescript("""
+        CREATE TABLE IF NOT EXISTS kady_messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, student TEXT NOT NULL, agent TEXT NOT NULL,
+          role TEXT NOT NULL, content TEXT NOT NULL, created TEXT NOT NULL);
+        CREATE INDEX IF NOT EXISTS kady_memory ON kady_messages(student,agent,id);
+        CREATE TABLE IF NOT EXISTS kady_notices (
+          student TEXT NOT NULL, agent TEXT NOT NULL, notice TEXT NOT NULL, seen TEXT NOT NULL,
+          PRIMARY KEY(student,agent,notice));
+        """)
         yield db
         db.commit()
     except Exception:
@@ -51,3 +67,29 @@ def student_tasks(path, student, groups):
             WHERE t.group_id IN ({','.join('?' for _ in groups)}) ORDER BY t.due,t.id''',
             (student, *groups)).fetchall()
         return [dict(row) for row in rows]
+
+
+def conversation(path, student, agent, limit=16):
+    with database(path) as db:
+        rows=db.execute('SELECT id,role,content FROM kady_messages WHERE student=? AND agent=? ORDER BY id DESC LIMIT ?',
+                        (student,agent,limit)).fetchall()
+        return [dict(row) for row in reversed(rows)]
+
+
+def remember(path, student, agent, prompt, answer):
+    with database(path) as db:
+        db.executemany('INSERT INTO kady_messages (student,agent,role,content,created) VALUES (?,?,?,?,?)',
+                       [(student,agent,'user',prompt[:4000],now()),(student,agent,'assistant',answer[:4000],now())])
+        db.execute('DELETE FROM kady_messages WHERE student=? AND agent=? AND id NOT IN (SELECT id FROM kady_messages WHERE student=? AND agent=? ORDER BY id DESC LIMIT 40)',
+                   (student,agent,student,agent))
+
+
+def notice_seen(path, student, agent, notice):
+    with database(path) as db:
+        return bool(db.execute('SELECT 1 FROM kady_notices WHERE student=? AND agent=? AND notice=?',(student,agent,notice)).fetchone())
+
+
+def claim_notice(path, student, agent, notice):
+    with database(path) as db:
+        result=db.execute('INSERT OR IGNORE INTO kady_notices VALUES (?,?,?,?)',(student,agent,notice,now()))
+        return result.rowcount == 1
