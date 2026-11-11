@@ -1,0 +1,15 @@
+<section id="kady-companion" data-user="{{ session.user_id }}" data-page="{{ request.path }}">
+    <button type="button" id="kady-bubble" class="kady-bubble" aria-controls="kady-window" aria-expanded="false" aria-label="Hablar con Kady. Puedes moverme arrastrando o con las flechas."><span class="kady-spark" aria-hidden="true">✦</span><span>Kady</span></button>
+    <section id="kady-window" class="kady-window" role="dialog" aria-modal="false" aria-labelledby="kady-title" hidden>
+        <header id="kady-drag" class="kady-drag" tabindex="0" aria-label="Mover ventana con las flechas o arrastrando">
+            <span class="ai-orb" aria-hidden="true">✦</span><div><strong id="kady-title">Kady</strong><small>A tu ritmo, contigo</small></div>
+            <button class="icon-button" id="kady-close" type="button" aria-label="Minimizar Kady">−</button>
+        </header>
+        <div id="kady-messages" class="kady-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <div class="kady-shortcuts">{% if can_approve_teachers %}<a href="{{ url_for('approvals_page') }}" class="text-link">Aprobar docentes</a>{% endif %}<button type="button" data-kady-prompt="¿Tengo tareas pendientes?">Mis tareas</button><button type="button" data-kady-prompt="Llévame a inicio">Inicio</button>{% if session.user_rol == 'alumno' %}<button type="button" data-kady-prompt="Quiero repasar álgebra">Repasar álgebra</button>{% endif %}</div>
+        <form id="kady-form" class="kady-form"><label for="kady-input" class="sr-only">Tu mensaje para Kady</label><textarea id="kady-input" rows="2" maxlength="4000" required placeholder="¿Cómo estás? ¿Qué repasamos?"></textarea><div class="kady-controls"><button type="button" id="kady-mic" class="btn btn-secondary" aria-pressed="false">Micrófono</button><button type="submit" id="kady-send" class="btn btn-primary">Enviar</button></div></form>
+        <div class="kady-audio-controls"><label><input id="kady-voice" type="checkbox"> Escuchar a Kady</label><button type="button" id="kady-stop" class="text-link">Detener voz</button></div>
+        <audio id="kady-audio" controls hidden></audio>
+        <p id="kady-status" class="kady-status" role="status"></p>
+    </section>
+</section>

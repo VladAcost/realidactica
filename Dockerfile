@@ -34,4 +34,4 @@ RUN mkdir -p /app/uploads/materials \
 
 USER realidactica
 
-CMD ["sh", "-c", "python scripts/init_db.py && exec gunicorn app:app --bind 0.0.0.0:${PORT:-8080} --workers 2 --threads 4 --timeout 120"]
+CMD ["python", "scripts/start_server.py"]

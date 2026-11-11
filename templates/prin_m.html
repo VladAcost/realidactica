@@ -5,7 +5,7 @@
 <div class="app-shell">
     <aside class="app-sidebar">
         <a class="brand-lockup" href="{{ url_for('maestro_prin') }}"><span class="brand-mark">R</span><span>Realidáctica</span></a>
-        <nav class="app-nav"><a class="nav-link active" href="{{ url_for('maestro_prin') }}"><span>⌂</span>Resumen</a><a class="nav-link" href="{{ url_for('maestro_portal') }}"><span>⇧</span>Materiales</a><a class="nav-link" href="{{ url_for('gestion') }}"><span>◇</span>Grupos</a></nav>
+        <nav class="app-nav"><a class="nav-link" href="{{ url_for('tasks_page') }}"><span>✓</span>Tareas y entregas</a><a class="nav-link active" href="{{ url_for('maestro_prin') }}"><span>⌂</span>Resumen</a><a class="nav-link" href="{{ url_for('maestro_portal') }}"><span>⇧</span>Materiales</a><a class="nav-link" href="{{ url_for('gestion') }}"><span>◇</span>Grupos</a></nav>
         <div class="sidebar-footer"><div class="user-chip"><span class="avatar">{{ session.user_name[0] | upper }}</span><div><strong>{{ session.user_name }}</strong><small>Docente</small></div></div><form action="{{ url_for('logout') }}" method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="btn btn-ghost btn-block">Cerrar sesión</button></form></div>
     </aside>
     <main class="app-main">

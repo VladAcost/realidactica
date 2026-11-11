@@ -1,0 +1,19 @@
+<aside id="math-slot"{% if topics is defined %} hidden{% endif %} class="math-slot" aria-label="Herramienta educativa matemática">
+<section class="panel math-widget" id="math-widget" aria-labelledby="math-title">
+  <header class="math-heading"><div><span class="eyebrow">Laboratorio matemático</span><h2 id="math-title">Explora y grafica</h2></div><button class="btn btn-ghost" id="math-expand" type="button" aria-haspopup="dialog">Ampliar ↗</button></header>
+  <label for="math-mode" hidden>Herramienta</label>
+  <select id="math-mode" hidden><option value="2d">Gráficas 2D</option></select>
+  <p class="math-help" id="math-topic-help">Explora la función que estás estudiando en esta clase.</p>
+  <form id="math-form">
+    <label id="math-expression-label" for="math-expression">y = f(x)</label>
+    <input id="math-expression" value="sin(x)" maxlength="200" autocomplete="off" spellcheck="false" aria-describedby="math-help">
+    <p class="math-help" id="math-help">Usa x, ^ para potencias y * para multiplicar. Ejemplo: x^2 - 4. También puedes escribir y = x^2.</p>
+    <div class="math-actions"><button class="btn btn-primary" id="math-draw" type="submit">Graficar</button><button class="btn btn-secondary" id="math-inverse" type="button" hidden>Inversa</button></div>
+  </form>
+  <p class="math-status" id="math-status" role="status" aria-live="polite"></p>
+  <div class="math-plot" id="math-plot" role="img" aria-label="Gráfica de la ecuación ingresada"></div>
+  <pre class="math-result" id="math-result" hidden></pre>
+  <p class="math-help" id="math-interaction">Arrastra para mover la gráfica. Doble clic para restaurar la vista.</p>
+</section>
+</aside>
+<dialog id="math-dialog" class="math-dialog" aria-label="Herramienta matemática ampliada"><div class="math-dialog-bar"><strong>Laboratorio matemático</strong><button class="btn btn-secondary" id="math-close" type="button">Reducir ↙</button></div><div id="math-dialog-content"></div></dialog>

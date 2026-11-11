@@ -23,6 +23,7 @@ from typing import Any, Callable
 
 import bcrypt
 import httpx
+from dotenv import load_dotenv
 from flask import (
     Flask,
     abort,
@@ -43,6 +44,8 @@ from diagnostics import DIAGNOSTICS, ENGLISH_LEVELS, evaluate, load_results, pub
 
 
 BASE_DIR = Path(__file__).resolve().parent
+# Keep explicit environment settings; load local defaults before reading config.
+load_dotenv(BASE_DIR / ".env", override=False)
 UPLOAD_DIR = Path(os.getenv("UPLOAD_FOLDER", BASE_DIR / "uploads" / "materials")).resolve()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-terra")
 ENGLISH_OPENAI_MODEL = os.getenv("ENGLISH_OPENAI_MODEL", "gpt-5.6-luna")
@@ -84,6 +87,11 @@ app.config.update(
     SESSION_COOKIE_SECURE=APP_ENV == "production",
     PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
     DIAGNOSTICS_DB_PATH=os.getenv("DIAGNOSTICS_DB_PATH") or str(BASE_DIR / "instance" / "diagnostics.sqlite3"),
+    ALGEBRA_DB_PATH=os.getenv("ALGEBRA_DB_PATH") or str(BASE_DIR / "instance" / "algebra.sqlite3"),
+    EXPERIENCE_DB_PATH=os.getenv("EXPERIENCE_DB_PATH") or str(BASE_DIR / "instance" / "experience.sqlite3"),
+    GOOGLE_CLIENT_ID=os.getenv("GOOGLE_CLIENT_ID", ""),
+    GOOGLE_CLIENT_SECRET=os.getenv("GOOGLE_CLIENT_SECRET", ""),
+    GOOGLE_APPROVER_EMAILS={email.strip().lower() for email in os.getenv("GOOGLE_APPROVER_EMAILS", "").split(",") if email.strip()},
 )
 
 mysql = MySQL(app)
@@ -310,6 +318,12 @@ def add_security_headers(response: Any) -> Any:
             "form-action 'self'; frame-ancestors 'none'; frame-src 'self' https://drive.google.com; "
             "img-src 'self' data:; media-src 'self' blob:; object-src 'none'; script-src 'self'; style-src 'self'"
         )
+        # Plotly generates chart styles at runtime. Keep this exception limited
+        # to math classrooms; scripts remain restricted to local project files.
+        if request.path in {"/clase/calculo", "/algebra"}:
+            response.headers["Content-Security-Policy"] = response.headers["Content-Security-Policy"].replace(
+                "style-src 'self'", "style-src 'self' 'unsafe-inline'"
+            )
         response.headers["X-Frame-Options"] = "DENY"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=()"
@@ -433,6 +447,7 @@ def _start_user_session(user: dict[str, Any]) -> str:
         demo_account=bool(user.get("demo", False)),
         chat_history=[],
     )
+    session["kady_checkin"] = True
     return "maestro_prin" if user["rol"] == ROLE_MAESTRO else "prin"
 
 
@@ -668,19 +683,27 @@ def clase_ingles() -> Any:
     )
 
 
-@lru_cache(maxsize=1)
-def _kady_voice_id() -> str:
-    if ELEVENLABS_VOICE_ID:
-        voice_id = ELEVENLABS_VOICE_ID
+@lru_cache(maxsize=2)
+def _kady_voice_id(language: str = "en") -> str:
+    configured = os.getenv("KADY_SPANISH_VOICE_ID", "").strip() if language == "es" else ELEVENLABS_VOICE_ID
+    if configured:
+        voice_id = configured
     else:
         response = httpx.get(
             "https://api.elevenlabs.io/v2/voices",
-            params={"voice_type": "default", "gender": "female", "language": "en"},
+            params={"voice_type": "default", "gender": "female", "language": language},
             headers={"xi-api-key": ELEVENLABS_API_KEY},
             timeout=12,
         )
         response.raise_for_status()
         voices = response.json().get("voices", [])
+        if language == "es":
+            def preference(voice):
+                labels = voice.get("labels", {})
+                description = json.dumps(voice, ensure_ascii=False).lower()
+                return (3 * any(word in description for word in ("mexican", "mexico", "méxico"))
+                        + 2 * any(word in description for word in ("calm", "warm", "gentle", "tranquil")))
+            voices.sort(key=preference, reverse=True)
         voice_id = voices[0].get("voice_id", "") if voices else ""
     if not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", voice_id):
         raise ValueError("No hay una voz femenina válida disponible en ElevenLabs")
@@ -1151,6 +1174,17 @@ def not_found(_: Exception) -> Any:
 @app.errorhandler(413)
 def too_large(_: Exception) -> Any:
     return jsonify({"error": "El archivo supera el límite de 15 MB."}), 413
+
+
+from algebra_routes import register_algebra
+from experience_routes import register_experience
+from google_auth import register_google
+
+register_algebra(app, roles_required, _diagnostic_student)
+register_experience(app, login_required, roles_required, _diagnostic_student, _db_cursor,
+                    lambda: mysql.connection, _kady_voice_id, lambda: ELEVENLABS_API_KEY,
+                    lambda: openai_client, OPENAI_MODEL, _safety_identifier, _material_text, SUBJECTS)
+register_google(app, _db_cursor, lambda: mysql.connection, _start_user_session, APP_BASE_URL)
 
 
 if __name__ == "__main__":

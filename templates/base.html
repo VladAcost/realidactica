@@ -8,6 +8,7 @@
     <title>{% block title %}Realidáctica{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
     <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='kady.css') }}">{% if session.loggedin %}<script src="{{ url_for('static', filename='js/kady.js') }}" defer></script>{% endif %}
     {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -30,6 +31,7 @@
     {% endwith %}
 
     {% block content %}{% endblock %}
+    {% if session.loggedin %}{% include "_kady.html" %}{% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

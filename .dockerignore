@@ -15,3 +15,4 @@ uploads
 tests
 *.log
 SECURITY_AUDIT.md
+instance/

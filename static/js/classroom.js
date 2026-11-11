@@ -2,59 +2,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const classroom = document.getElementById("classroom");
   const subject = classroom?.dataset.subject || "";
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
-  const form = document.getElementById("class-chat-form");
-  const input = document.getElementById("class-input");
-  const sendButton = document.getElementById("class-send");
-  const responseBox = document.getElementById("class-response");
   const modal = document.getElementById("test-modal");
   const testContent = document.getElementById("test-content");
   const testTitle = document.getElementById("test-title");
   const openTestButton = document.getElementById("open-test");
 
-  if (!classroom || !form || !input || !sendButton || !responseBox || !modal || !testContent) return;
-
-  async function askTutor(question) {
-    const text = question.trim();
-    if (!text || sendButton.disabled) return;
-    input.value = "";
-    sendButton.disabled = true;
-    sendButton.textContent = "Analizando…";
-    responseBox.textContent = "Kady está revisando el material de la clase…";
-    try {
-      const payload = new FormData();
-      payload.append("consulta", text);
-      payload.append("materia", subject);
-      const response = await fetch("/consulta_clase", {
-        method: "POST",
-        body: payload,
-        credentials: "same-origin",
-        headers: { "X-CSRF-Token": csrf },
-      });
-      const data = await response.json().catch(() => ({}));
-      responseBox.textContent = response.ok
-        ? data.mensaje || "No recibí una respuesta."
-        : data.error || "No fue posible consultar el material.";
-    } catch (_) {
-      responseBox.textContent = "No se pudo conectar con el servidor.";
-    } finally {
-      sendButton.disabled = false;
-      sendButton.textContent = "Consultar material";
-    }
-  }
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    askTutor(input.value);
-  });
-
-  document.addEventListener("diagnostic:review", (event) => {
-    askTutor(event.detail.prompt);
-    responseBox.scrollIntoView({behavior: "smooth", block: "center"});
-  });
-
-  document.querySelectorAll("[data-prompt]").forEach((chip) => {
-    chip.addEventListener("click", () => askTutor(chip.dataset.prompt || ""));
-  });
+  if (!classroom || !modal || !testContent) return;
 
   function openModal() {
     modal.hidden = false;

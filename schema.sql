@@ -120,3 +120,10 @@ CREATE TABLE IF NOT EXISTS interacciones_ia (
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS google_identities (
+  subject VARCHAR(255) NOT NULL PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL UNIQUE,
+  pending_teacher TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_google_user FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

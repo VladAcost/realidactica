@@ -6,9 +6,10 @@
     <aside class="app-sidebar">
         <a class="brand-lockup" href="{{ url_for('prin') }}"><span class="brand-mark">R</span><span>Realidáctica</span></a>
         <nav class="app-nav" aria-label="Navegación del estudiante">
-            <a class="nav-link active" href="{{ url_for('prin') }}"><span>⌂</span>Resumen</a>
+            <a class="nav-link active" href="{{ url_for('prin') }}"><span>⌂</span>Inicio</a>
+            <a class="nav-link" href="{{ url_for('tasks_page') }}"><span>✓</span>Mis tareas</a>
             <a class="nav-link" href="{{ url_for('portal_alumno') }}"><span>◎</span>Mi perfil</a>
-            <a class="nav-link" href="{{ url_for('encuesta') }}"><span>◇</span>Estilo de aprendizaje</a>
+            <a class="nav-link" href="{{ url_for('encuesta') }}"><span>◇</span>Mi estilo de aprendizaje</a>
         </nav>
         <div class="sidebar-footer">
             <div class="user-chip"><span class="avatar">{{ session.user_name[0] | upper }}</span><div><strong>{{ session.user_name }}</strong><small>Estudiante</small></div></div>
@@ -27,8 +28,13 @@
 
         <section class="dashboard-grid">
             <div class="dashboard-content">
-                <div class="section-row"><div><span class="eyebrow">Continúa aprendiendo</span><h2>Tus clases</h2></div><span class="muted">4 espacios activos</span></div>
+                <div class="section-row"><div><span class="eyebrow">Continúa aprendiendo</span><h2>Tus clases</h2></div><span class="muted">5 espacios activos</span></div>
                 <div class="course-grid">
+                    <a class="course-card accent-violet" href="{{ url_for('algebra.classroom') }}">
+                        <span class="course-index">ÁLGEBRA</span>
+                        <div><span class="course-type">Recorrido de aprendizaje</span><h3>Álgebra</h3><p>10 temas, práctica guiada y gráficas.</p><span class="course-diagnostic-label">Diagnóstico inicial · Encuentra tu punto de partida</span></div>
+                        <span class="course-arrow">↗</span>
+                    </a>
                     {% for key, subject in subjects.items() %}
                     <a class="course-card accent-{{ subject.accent }}" href="{{ url_for('clase', subject_key=key) }}">
                         <span class="course-index">0{{ loop.index }}</span>
@@ -55,20 +61,8 @@
                 </section>
             </div>
 
-            <aside class="panel chat-panel" data-chat-panel>
-                <div class="chat-heading"><span class="ai-orb">K</span><div><span class="eyebrow">Tutoría con IA</span><h2>Kady</h2></div><span class="status-badge">Terra</span></div>
-                <div class="chat-history" id="chat-history" aria-live="polite">
-                    <div class="chat-message assistant"><p>Hola, {{ session.user_name }}. ¿Qué concepto quieres comprender hoy?</p></div>
-                </div>
-                <form class="chat-form" id="chat-form">
-                    <label class="sr-only" for="chat-input">Pregunta para Kady</label>
-                    <textarea id="chat-input" rows="2" maxlength="4000" placeholder="Escribe tu pregunta..."></textarea>
-                    <button class="btn btn-primary" id="send-btn" type="submit">Enviar</button>
-                </form>
-                <p class="chat-note">La IA puede equivocarse. Verifica datos importantes con tu docente.</p>
-            </aside>
+
         </section>
     </main>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/chat.js') }}" defer></script>{% endblock %}

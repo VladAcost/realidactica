@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 from pathlib import Path
 
@@ -79,6 +80,39 @@ def seed_demo_user(connection: MySQLdb.Connection) -> bool:
     return True
 
 
+def verify_existing_schema(connection, statements) -> None:
+    """Stop before DDL if an existing table lacks columns the release requires."""
+    required = {}
+    for statement in statements:
+        match = re.search(r'CREATE TABLE IF NOT EXISTS (\w+)\s*\((.*)\) ENGINE=', statement, re.S)
+        if not match:
+            continue
+        columns = set()
+        for line in match.group(2).splitlines():
+            column = re.match(r'\s*(\w+)\s+(?:INT|BIGINT|TINYINT|VARCHAR|TEXT|MEDIUMTEXT|DATETIME|TIMESTAMP|ENUM)\b', line, re.I)
+            if column:
+                columns.add(column.group(1))
+        required[match.group(1)] = columns
+    cursor = connection.cursor()
+    try:
+        cursor.execute('SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=%s', (os.environ['MYSQL_DB'],))
+        existing = {}
+        column_types = {}
+        for table, column, kind in cursor.fetchall():
+            existing.setdefault(table, set()).add(column)
+            column_types[(table, column)] = kind.lower()
+        missing = [f"{table}.{column}" for table, columns in required.items() if table in existing
+                   for column in sorted(columns - existing[table])]
+        if missing:
+            raise RuntimeError('La base existente requiere una migración revisada antes de publicar: ' + ', '.join(missing))
+        if 'google_identities' not in existing and 'usuarios' in existing:
+            kind = column_types.get(('usuarios', 'id'), '')
+            if not re.fullmatch(r'int(?:\(\d+\))? unsigned', kind):
+                raise RuntimeError('Revisa el tipo de usuarios.id antes de crear el vínculo de Google; esta versión espera INT UNSIGNED.')
+    finally:
+        cursor.close()
+
+
 def main() -> None:
     statements = [
         statement.strip()
@@ -87,6 +121,7 @@ def main() -> None:
     ]
     connection = connect_with_retry()
     try:
+        verify_existing_schema(connection, statements)
         cursor = connection.cursor()
         for statement in statements:
             cursor.execute(statement)

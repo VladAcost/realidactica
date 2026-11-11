@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Aprobar docentes · Realidáctica{% endblock %}
+{% block content %}<main class="task-layout" id="approvals-app"><a href="{{ url_for('tasks_page') }}">← Tareas</a><section class="panel"><span class="eyebrow">Administración</span><h1>Cuentas docentes</h1><p>Revisa el correo y la identidad antes de aprobar el acceso docente.</p><p id="approval-status" role="status"></p><div id="approval-list"></div></section></main>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/tasks.js') }}" defer></script>{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Álgebra · Realidáctica{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='algebra.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='math-widget.css') }}">{% endblock %}
+{% block content %}
+<main class="algebra-shell" id="algebra-app" data-topics='{{ topics | tojson }}' data-kinds='{{ kinds | tojson }}'>
+    <a class="text-link" href="{{ url_for('prin') }}">← Volver a mis clases</a>
+    <header class="page-header"><div><span class="eyebrow">Mi espacio de matemáticas</span><h1>Álgebra, paso a paso.</h1></div>
+    <details class="journey-flag"><summary><span aria-hidden="true">⚑</span><span id="course-progress">Clase 1/10</span><progress id="journey-progress" max="10" value="0" aria-label="Temas acreditados"></progress></summary><div class="journey-menu"><label for="topic-select">Elige una clase</label><select id="topic-select">{% for topic in topics %}<option value="{{ topic.id }}">{{ loop.index }}. {{ topic.titulo }}</option>{% endfor %}</select><ol id="topic-progress" class="topic-progress"></ol></div></details></header>
+    <section id="initial-intro" class="panel initial-intro" hidden><span class="eyebrow">Primero, conozcamos tus bases</span><h2>Cada camino empieza donde estás.</h2><p>12 preguntas, sin reloj, hasta multiplicación y división de expresiones. Si algo no te sale, puedes decir «No lo sé todavía». Estoy aquí para acompañarte.</p><p class="muted">Si aciertas todo, acreditaremos estas cuatro clases y podrás continuar o probar un reto avanzado.</p><button type="button" class="btn btn-primary" id="begin-initial">Conocer mi punto de partida →</button></section>
+    <noscript><p>Activa JavaScript para contestar y graficar. Las explicaciones están disponibles a continuación.</p>{% for topic in topics %}<h2>{{ topic.titulo }}</h2><p>{{ topic.explicacion }}</p>{% endfor %}</noscript>
+    <div class="algebra-layout">
+
+        <div class="algebra-content">
+            <section class="panel topic-guide" id="topic-guide" aria-labelledby="topic-title"><span class="eyebrow">Descubre la idea</span><h2 id="topic-title"></h2><p id="topic-explanation"></p><div class="equation-display" id="topic-equation" aria-label="Expresión de ejemplo"></div><h3 id="topic-example"></h3><ol id="topic-steps"></ol><p class="muted" id="learning-state"></p></section>
+            <section class="panel" aria-labelledby="activities-title"><h2 id="activities-title">Ponlo en práctica</h2><div id="activity-controls"><p class="muted" id="recommendation"></p>
+                <div class="algebra-fields"><label>Nivel<select id="level-select">{% for key, label in levels.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label><label>Tipo de práctica<select id="kind-select"></select></label></div>
+                <div class="algebra-actions"><button class="btn btn-secondary" type="button" data-mode="diagnostico">Diagnóstico · 5 preguntas</button><button class="btn btn-secondary" type="button" data-mode="practica">Practicar</button><button class="btn btn-primary" type="button" data-mode="final">Evaluación · 10 preguntas</button></div>
+                </div><p id="algebra-status" role="status" aria-live="polite"></p>
+                <section id="attempt-panel" hidden aria-labelledby="attempt-title"><h3 id="attempt-title" tabindex="-1"></h3><form id="attempt-form"><progress id="question-progress" value="0" max="12" aria-label="Avance del cuestionario" hidden></progress><div id="questions"></div><div id="initial-navigation" class="algebra-actions" hidden><button type="button" id="initial-back" class="btn btn-ghost">← Anterior</button><span id="initial-counter" class="muted"></span><button type="button" id="initial-next" class="btn btn-secondary">Siguiente →</button></div><label id="procedure-label" hidden>Escribe tu procedimiento<textarea id="procedure" rows="3" maxlength="4000"></textarea><small>Se guarda en tu historial. Esta versión verifica el resultado numérico; no califica la validez de cada paso escrito.</small></label><button class="btn btn-primary" type="submit" id="submit-attempt">Enviar respuestas</button></form><div id="attempt-feedback" aria-live="polite"></div></section>
+            </section>
+            <section class="panel" aria-labelledby="history-title"><div class="section-row"><h2 id="history-title">Mi historial</h2><button class="btn btn-ghost" type="button" id="load-history">Actualizar</button></div><p class="muted">Resultados y respuestas de tu cuenta. Cada intento se conserva.</p><div id="history-output" aria-live="polite"></div></section>
+        </div>
+        {% include "_math_widget.html" %}
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}{% include '_math_scripts.html' %}<script src="{{ url_for('static', filename='js/algebra.js') }}" defer></script>{% endblock %}

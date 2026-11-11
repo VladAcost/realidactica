@@ -7,7 +7,7 @@ Plataforma educativa Flask con paneles para estudiantes y docentes, tutoría con
 1. Crea un entorno virtual e instala `requirements.txt`.
 2. Copia `.env.example` a `.env` y asigna secretos nuevos.
 3. Crea la base de datos con `schema.sql`. Para una base existente, revisa y aplica `migrations/001_security_hardening.sql` después de generar un respaldo.
-4. En Windows, inicia con `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start_local.ps1`; el script carga `.env` solo para ese proceso y usa el entorno virtual del proyecto si existe. En otros entornos, exporta las variables de `.env` antes de iniciar Flask.
+4. En Windows, inicia con `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start_local.ps1`; el script carga `.env` solo para ese proceso y usa el entorno virtual del proyecto si existe. La aplicación también carga `.env` automáticamente al arrancar con `python app.py`, sin reemplazar las variables ya definidas en el entorno.
 5. Para producción, usa un servidor WSGI.
 
 La aplicación usa `gpt-5.6-terra` mediante OpenAI Responses API por defecto. Solo la conversación de inglés usa `gpt-5.6-luna`, configurable con `ENGLISH_OPENAI_MODEL`, para respuestas orales breves. La clave se lee únicamente desde `OPENAI_API_KEY`. La clase de inglés comienza con un cuestionario de seis preguntas que estima un nivel orientativo A1–B2. Después de activar el micrófono una vez, el estudiante dice «Hola Kady» y puede hablar en español o inglés. La conversación permanece abierta después de cada respuesta; tras 45 segundos de silencio vuelve a esperar «Hola Kady». El navegador detecta frases, conserva archivos de audio completos y espera 1,8 segundos de pausa antes de enviarlos al servidor. ElevenLabs Scribe v2 detecta el idioma automáticamente; solo durante la activación se refuerzan los términos «Hola Kady» y «Kady» con keyterm prompting, que tiene un recargo del proveedor. La pantalla muestra la última transcripción incluso si la activación o la respuesta fallan. Kady dice una respuesta corta en inglés, un consejo breve en español y un ejemplo práctico en inglés con una voz femenina de ElevenLabs; la traducción del ejemplo queda visible en pantalla. Se requiere `ELEVENLABS_API_KEY` en el servidor para transcripción y voz, además de `OPENAI_API_KEY` para la respuesta de Kady. `ELEVENLABS_VOICE_ID` permite fijar una voz femenina concreta; si está vacío, la app elige una voz femenina disponible. No pongas las claves en JavaScript ni en el repositorio.
@@ -24,6 +24,14 @@ El `Dockerfile` ejecuta `scripts/init_db.py` antes de iniciar Gunicorn. Configur
 
 Para crear un usuario inicial puede definirse temporalmente `BOOTSTRAP_DEMO_PASSWORD` junto con `BOOTSTRAP_DEMO_USERNAME`, `BOOTSTRAP_DEMO_EMAIL` y `BOOTSTRAP_DEMO_ROLE` (`alumno` o `maestro`). Elimina esas variables después del primer despliegue; la cuenta queda guardada con bcrypt en MySQL.
 
+## Requerimientos y módulo de álgebra
+
+El [análisis de los siete requerimientos del Word](docs/requerimientos_realidactica.md) detalla cobertura, decisiones, pendientes y orden de desarrollo. La primera entrega incorpora `/algebra`, accesible desde el panel del alumno: diez temas, diagnósticos de 5 preguntas, finales de 10, práctica con pista y segundo intento, historial privado y gráficas de constantes, rectas y parábolas. Las explicaciones se pueden explorar libremente; las actividades avanzan por temas aprobados con al menos 75% (8 de 10 aciertos).
+
+Este banco inicial y el graficador funcionan sin llamadas a IA. La evaluación comprueba respuestas numéricas; guarda procedimientos escritos, pero aún no verifica cada paso libre. La actualización de Kady incorpora conversación, voz y un flujo docente de tareas con entregas de texto. Siguen pendientes fotografías y reportes completos. No se consideran completados los siete requisitos.
+
+Se crea `instance/algebra.sqlite3` al utilizar el módulo. En producción, configura `ALGEBRA_DB_PATH` en un volumen persistente y respáldalo; antes de usar varias réplicas, migra a un almacén compartido. Reinicia la aplicación con el script habitual para cargar las nuevas rutas.
+
 ## Seguridad
 
 Consulta `SECURITY_AUDIT.md`. Antes de desplegar, rota las credenciales que aparecieron en versiones anteriores del repositorio.
@@ -31,3 +39,9 @@ Consulta `SECURITY_AUDIT.md`. Antes de desplegar, rota las credenciales que apar
 ## Pruebas locales
 
 Ejecuta `.venv\Scripts\python.exe -m unittest discover -s tests -v` para las rutas del servidor y `node --test tests/test_english_voice.js` para activación, conversación continua, pausas, reintentos y cancelación de la escucha. Estas pruebas usan respuestas simuladas y no consumen créditos de las API.
+
+## Kady global, acceso con Google y tareas
+
+La burbuja de Kady acompaña las pantallas con sesión; su ventana y burbuja se pueden mover con el ratón o las flechas. Incluye navegación por órdenes, bienvenida por rol, voz en español mediante ElevenLabs y consulta de tareas asignadas. Álgebra añade un diagnóstico inicial de 12 preguntas que puede acreditar los cuatro primeros temas. Los docentes pueden crear tareas por grupo y revisar entregas de texto; las nuevas cuentas docentes de Google esperan aprobación.
+
+Consulta [activación, persistencia y alcance](docs/kady_google_tareas.md). La voz y el acceso con Google requieren configurar las credenciales privadas del servidor. La migración `migrations/002_google_identity.sql` añade el vínculo de cuentas Google a bases existentes.

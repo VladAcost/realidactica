@@ -1,0 +1,28 @@
+.class-tools { display: grid; gap: 20px; min-width: 0; }
+.class-tools .class-assistant { position: static; }
+.math-slot { min-width: 0; }
+.math-widget { min-width: 0; padding: 20px; }
+.math-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
+.math-heading h2 { font-size: 1.1rem; margin: 4px 0 0; }
+.math-heading .btn { padding: 8px; white-space: nowrap; }
+.math-widget label { display: block; font-size: .8rem; margin: 12px 0 6px; }
+.math-widget select, .math-widget input { width: 100%; min-width: 0; }
+.math-widget input { font-family: monospace; }
+.math-help { color: var(--muted); font-size: .75rem; line-height: 1.6; margin: 10px 0; }
+.math-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.math-status { color: var(--danger, #e87171); font-size: .8rem; margin: 8px 0; }
+.math-plot { width: 100%; height: 245px; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; }
+.math-result { white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; background: var(--surface-soft); border-radius: 12px; font-size: .85rem; }
+.math-widget [hidden] { display: none !important; }
+.math-dialog { width: min(1100px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 18px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: auto; }
+.math-dialog::backdrop { background: rgba(0,0,0,.7); }
+.math-dialog-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.math-dialog .math-plot { height: min(55dvh, 560px); }
+.math-dialog #math-expand { display: none; }
+.algebra-layout > .math-slot { position: sticky; top: 20px; }
+@media (min-width: 1200px) { .algebra-layout:has(> .math-slot:not([hidden])) { grid-template-columns: 230px minmax(0, 1fr) 330px; gap: 18px; } }
+@media (min-width: 901px) and (max-width: 1199px) { .algebra-layout > .math-slot { grid-column: 2; position: static; } }
+@media (max-width: 900px) { .algebra-layout > .math-slot { position: static; } }
+@media (max-width: 550px) { .math-dialog { padding: 10px; } .math-heading { flex-wrap: wrap; } }
+
+.math-slot[hidden] { display: none !important; }

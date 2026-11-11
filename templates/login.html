@@ -36,6 +36,12 @@
                 </label>
                 <button class="btn btn-primary btn-block" type="submit">Entrar a Realidáctica</button>
             </form>
+            <form method="post" action="{{ url_for('google_start') }}" class="google-login stack-form">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <label>Si eres nuevo, entrarás como<select name="rol"><option value="alumno">Estudiante</option><option value="maestro">Docente · requiere aprobación</option></select></label>
+                <button class="btn btn-secondary btn-block" type="submit" {% if not google_configured %}disabled{% endif %}><span class="google-mark" aria-hidden="true">G</span>Continuar con Google</button>
+                {% if not google_configured %}<small class="muted">El acceso con Google estará disponible próximamente.</small>{% endif %}
+            </form>
             <p class="auth-switch">¿Aún no tienes cuenta? <a href="{{ url_for('registro') }}">Crear cuenta</a></p>
         </div>
     </section>
