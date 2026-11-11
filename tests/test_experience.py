@@ -1,4 +1,5 @@
 import json
+import io
 import sqlite3
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -113,6 +114,19 @@ class ExperienceTests(TestCase):
         with patch.object(module,'ELEVENLABS_API_KEY',''):
             self.assertEqual(self.post('/api/kady/voz',{'texto':'Hola'}).status_code,503)
         self.assertEqual(self.post('/api/kady/voz',{'texto':[]}).status_code,400)
+
+    def test_continuous_voice_accepts_wav_and_preserves_subject_language(self):
+        response=MagicMock()
+        response.json.return_value={'text':'Ayúdame con este paso.'}
+        for agent in ('algebra','ingles'):
+            with patch.object(module,'ELEVENLABS_API_KEY','test'),patch('experience_routes.httpx.post',return_value=response) as post:
+                result=self.client.post('/api/kady/transcribir',data={'audio':(io.BytesIO(b'RIFF'+b'\0'*1000),'voice.wav','audio/wav'),'agente':agent},headers={'X-CSRF-Token':'test'})
+            self.assertEqual(result.status_code,200,result.json)
+            self.assertEqual(result.json['texto'],'Ayúdame con este paso.')
+            self.assertEqual(post.call_args.kwargs['files']['file'][2],'audio/wav')
+            data=post.call_args.kwargs['data']
+            self.assertEqual(data.get('language_code'),'spa' if agent=='algebra' else None)
+            self.assertEqual(data['num_speakers'],'1')
 
     def initial(self, count=12):
         attempt=self.post('/api/algebra/inicial',{}).json['intento']

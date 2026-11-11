@@ -60,7 +60,7 @@ async function classroom(transcripts, answerStatus = 200, options = {}) {
       if (options.onPlay) options.onPlay(this);
       else queueMicrotask(() => this.onended());
     }
-    pause() {}
+    pause() { this.paused = true; }
   }
   const sandbox = {
     document: {getElementById: (id) => elements.get(id), querySelector: () => ({content: "csrf"}),
@@ -220,4 +220,30 @@ test("the visual follows hearing, spoken playback, listening and stop", async ()
   assert.equal(state(), "listening");
   await page.click("english-stop");
   assert.equal(state(), "idle");
+});
+
+test("speaking over Kady interrupts English playback and sends the entire next turn", async () => {
+  let playback;
+  const page = await classroom(["Hola Kady, hello", "Can you explain that again?"], 200, {onPlay: player => { playback = player; }});
+  await page.phrase();
+  await page.tick(300, 0.002);
+  await page.tick(30, 0.04);
+  await page.tick(130, 0.04);
+  assert.notEqual(playback.paused, true);
+  await page.tick(130, 0.04);
+  assert.equal(playback.paused, true);
+  assert.equal(page.elements.get("kady-visual").dataset.state, "hearing");
+  await page.tick(400, 0.04);
+  await page.tick(1900);
+  await flush();await flush();
+  assert.deepEqual(page.requests.filter(r => r.url === "/conversar_ingles").map(r => r.text), ["hello", "Can you explain that again"]);
+  await page.click("english-stop");
+});
+
+test("a short sound while English is speaking does not interrupt playback", async () => {
+  let playback;
+  const page = await classroom(["Hola Kady, hello"], 200, {onPlay: player => { playback = player; }});
+  await page.phrase();await page.tick(300, 0.002);await page.tick(20, 0.04);await page.tick(90, 0.04);await page.tick(40, 0.002);
+  assert.notEqual(playback.paused, true);assert.equal(page.requests.filter(r => r.url === "/transcribir_ingles").length, 1);
+  await page.click("english-stop");
 });

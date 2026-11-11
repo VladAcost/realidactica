@@ -71,3 +71,6 @@
 
 .kady-messages { flex:1 1 auto; min-height:64px; }
 .kady-window > :not(.kady-messages) { flex-shrink:0; }
+
+.kady-mic[aria-pressed=true] { border-color:var(--primary); background:var(--primary-soft); }
+.kady-mic[aria-pressed=true] .kady-mic-bars { opacity:1; }

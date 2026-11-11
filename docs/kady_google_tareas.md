@@ -9,7 +9,7 @@ Kady flotante acompaña las pantallas con sesión. Cada pestaña selecciona su p
 - **Kady Cálculo:** integrales y sus bases, actividades y tareas de cálculo.
 - **Kady JavaScript:** programación, frameworks y material de desarrollo web.
 - **Kady Liderazgo:** liderazgo, comunicación y trabajo en equipo.
-- **Kady Inglés:** aprendizaje y práctica de inglés. La conversación oral dedicada de inglés conserva su funcionamiento.
+- **Kady Inglés:** aprendizaje y práctica de inglés. La conversación oral dedicada de inglés conserva su activación y también permite interrumpir la respuesta al hablar.
 
 `kady_agents.py` define los ámbitos. El servidor valida el identificador de tutora; no acepta instrucciones del navegador para ampliar su alcance. Las otras materias se remiten a Inicio. Cada conversación conserva hasta 40 mensajes por cuenta y tutora, muestra los 16 últimos y usa los 12 últimos como contexto para el modelo. Las peticiones a OpenAI usan `store=False`.
 
@@ -21,7 +21,17 @@ En la primera visita de un alumno, Kady da una bienvenida breve y explica Realid
 
 En `.env`, coloca `ELEVENLABS_API_KEY`. Selecciona en ElevenLabs una voz femenina de español de México con tono cálido y tranquilo, y coloca su identificador en `KADY_SPANISH_VOICE_ID`. La selección automática prioriza voces femeninas disponibles en español con referencias a México y tono calmado. La clave se usa solo en el servidor. El ritmo se configura a 0.94 con Multilingual v2. En Railway la voz y la conversación con OpenAI ya están configuradas; el usuario confirmó que puede escuchar y conversar por escrito y por voz.
 
-La reproducción comienza cuando el navegador la permite; si la bloquea, Kady muestra un reproductor. Se puede silenciar y detener la voz. El nuevo botón **Hablar** muestra nivel, tiempo y estados de escucha. El navegador solicita cancelación de eco, reducción de ruido y ajuste de ganancia; conserva el audio completo y espera 2,2 segundos de pausa antes de enviarlo a ElevenLabs Scribe v2. **Terminar** permite enviarlo manualmente. El límite es de 60 segundos; 12 segundos sin detectar voz cancelan la captura sin pedir transcripción. Cerrar la ventana cancela la captura o la transcripción pendiente. La última frase entendida queda visible para comprobarla.
+La reproducción comienza cuando el navegador la permite; si la bloquea, Kady muestra un reproductor. Se puede silenciar y detener la voz.
+
+### Conversación continua
+
+Pulsa **Conversar** una sola vez y autoriza el micrófono. Habla con naturalidad: después de 1,5 segundos de pausa se envía la frase y Kady responde; al terminar vuelve a escuchar sin otro toque. Si hablas mientras responde, una señal de voz sostenida detiene el audio y conserva el comienzo de tu nueva frase. El indicador muestra si está escuchando, entendiendo o hablando. No se escucha mientras está transcribiendo o preparando la respuesta.
+
+**Finalizar**, «termina la conversación», minimizar Kady, ocultar la pestaña o salir apagan el micrófono y cancelan la transcripción pendiente. Tras 90 segundos sin conversación también se pausa. La escucha no se reactiva automáticamente al regresar a la página. El control de Inglés y la burbuja detienen mutuamente su captura para no mantener dos micrófonos activos.
+
+El audio se procesa con `AudioWorklet`, se convierte a PCM mono de 16 kHz y se envía como WAV completo por frase a ElevenLabs Scribe v2. Un pequeño búfer local conserva el principio de las palabras. Los silencios y las pruebas de volumen permanecen en el navegador; cada frase tiene un máximo de 58 segundos y cabe en el límite de 2 MB del servidor. El navegador solicita cancelación de eco, reducción de ruido y ajuste de ganancia; cuando ofrece el modo de cancelación de todo el audio local, se prefiere ese modo. Una detección más conservadora durante la reproducción reduce interrupciones por ruido. La precisión de la interrupción depende del micrófono, la acústica y la cancelación de eco disponible; usar auriculares puede ayudar.
+
+Requiere un navegador con AudioWorklet y acceso seguro al micrófono (HTTPS o localhost). Si no está disponible, se conserva el chat escrito. Referencias: [procesamiento de audio del navegador](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/process) y [cancelación de eco](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints/echoCancellation).
 
 ## Activar Google
 
@@ -55,7 +65,7 @@ El diagnóstico inicial cubre lenguaje algebraico, signos, suma y resta, y multi
 
 `EXPERIENCE_DB_PATH` guarda bienvenida, avisos, historiales por tutora, tareas y entregas (por defecto `instance/experience.sqlite3`). La actualización crea las tablas de memoria y avisos y añade la columna de materia sin borrar tareas existentes. `ALGEBRA_DB_PATH` guarda evaluaciones. Configura ambos en un volumen persistente y respáldalos; para varias instancias migra a almacenamiento compartido. Las identidades Google, usuarios y membresías de grupo están en MySQL.
 
-Pruebas: `.venv/Scripts/python.exe -m unittest discover -s tests -v` y `node --test tests/test_english_voice.js tests/test_math_widget.js tests/test_kady.js`.
+Pruebas: `.venv/Scripts/python.exe -m unittest discover -s tests -v` y `node --test tests/test_english_voice.js tests/test_math_widget.js tests/test_kady.js tests/test_kady_capture.js`.
 
 Referencias oficiales: [ElevenLabs: voz](https://elevenlabs.io/docs/overview/capabilities/text-to-speech), [ajustes de velocidad](https://elevenlabs.io/docs/help-center/product/core-capabilities/text-to-speech/can-i-change-the-pace-of-the-voice), [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect).
 

@@ -44,6 +44,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let voiceFrames = 0;
   let speechStart = 0;
   let lastVoice = 0;
+  let speakingSince = 0;
+  let bargeStart = 0;
+  let echoFloor = 0.003;
+  let playbackInterrupted = false;
 
   function setStatus(message) { status.textContent = message; }
 
@@ -119,6 +123,8 @@ document.addEventListener("DOMContentLoaded", () => {
     outputSamples = null;
     speaking = false;
     conversationOpen = false;
+    bargeStart = 0;
+    playbackInterrupted = false;
     micLevel.value = 0;
     visual?.setLevel(0);
     setVisualState("idle");
@@ -226,11 +232,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } finally {
       if (isCurrent(session)) {
-        await rotateRecorder();
+        if (!capturing) await rotateRecorder();
         if (isCurrent(session)) {
           pendingRequest = null;
           if (conversationOpen) replyDeadline = performance.now() + 45000;
-          listenAfter = performance.now() + (wakeCue ? 350 : 150);
+          listenAfter = capturing ? 0 : performance.now() + (wakeCue ? 350 : 150);
           busy = false;
           if (wakeCue) playWakeCue();
         }
@@ -256,6 +262,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     visual?.setLevel(speaking ? outputRms * 12 : capturing ? rms * 16 : 0);
     const now = performance.now();
+    if (speaking && !capturing && recorder?.state === "recording") {
+      // Browser echo cancellation removes playback; require sustained residual voice to interrupt.
+      const threshold = Math.max(0.014, noiseFloor * 3.5, echoFloor * 2.5);
+      if (now - speakingSince < 260) {
+        echoFloor = 0.8 * echoFloor + 0.2 * rms;
+      } else if (rms > threshold) {
+        if (!bargeStart) bargeStart = now;
+        if (now - bargeStart >= 240) {
+          playbackInterrupted = true;
+          capturing = true;
+          speechStart = bargeStart;
+          lastVoice = now;
+          conversationOpen = true;
+          audioPlayer?.pause();
+          window.speechSynthesis?.cancel();
+          finishPlayback?.();
+          setVisualState("hearing");
+          setStatus("Te escucho. Continúa con tu idea.");
+        }
+      } else {
+        bargeStart = 0;
+        echoFloor = 0.98 * echoFloor + 0.02 * rms;
+        if (now - recordingStartedAt > 700) rotateRecorder();
+      }
+    }
     if (!busy && !speaking && !finishing && now >= listenAfter && recorder?.state === "recording") {
       if (conversationOpen && !capturing && now > replyDeadline) {
         conversationOpen = false;
@@ -311,6 +342,10 @@ document.addEventListener("DOMContentLoaded", () => {
   async function playKady(data, session) {
     if (!isCurrent(session)) return;
     speaking = true;
+    speakingSince = performance.now();
+    bargeStart = 0;
+    echoFloor = 0.003;
+    playbackInterrupted = false;
     setVisualState("speaking");
     let voiceSource = null;
     let playbackAnalyser = null;
@@ -347,7 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
         audioPlayer.play().catch(done);
       });
     } catch (_) {
-      await fallbackSpeech(shortSpokenAnswer(data), session);
+      if (!playbackInterrupted) await fallbackSpeech(shortSpokenAnswer(data), session);
     } finally {
       voiceSource?.disconnect();
       playbackAnalyser?.disconnect();
@@ -380,9 +415,11 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("english-tip").textContent = data.feedback_es;
       document.getElementById("english-example").textContent = data.example_en + " — " + data.example_es;
       feedback.hidden = false;
-      setStatus("Kady está hablando. Escucha su respuesta antes de continuar.");
+      await rotateRecorder();
+      if (!isCurrent(session)) return;
+      setStatus("Kady está hablando. Puedes interrumpirla al hablar.");
       await playKady(data, session);
-      if (isCurrent(session)) listenForReply();
+      if (isCurrent(session) && !capturing) listenForReply();
     } catch (error) {
       if (isCurrent(session)) {
         replyDeadline = performance.now() + 45000;
@@ -504,5 +541,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   stop.addEventListener("click", stopVoice);
   window.addEventListener("beforeunload", stopVoice);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) stopVoice(); });
   window.addEventListener("beforeunload", () => visual?.destroy());
 });
