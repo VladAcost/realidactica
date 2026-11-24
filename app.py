@@ -382,8 +382,13 @@ def _material_text(subject_key: str) -> str:
 
 
 def _send_confirmation_email(name: str, destination: str, token: str) -> bool:
-    if not GMAIL_USER or not GMAIL_PASS:
-        app.logger.warning("Correo no enviado: faltan GMAIL_USER/GMAIL_APP_PASSWORD")
+    resend_key = os.getenv("RESEND_API_KEY", "").strip()
+    resend_from = os.getenv("RESEND_FROM_EMAIL", "").strip()
+    if resend_key and not resend_from:
+        app.logger.warning("Correo no enviado: falta RESEND_FROM_EMAIL")
+        return False
+    if not resend_key and not (GMAIL_USER and GMAIL_PASS):
+        app.logger.warning("Correo no enviado: no hay un proveedor configurado")
         return False
     safe_name = html.escape(name)
     link = f"{APP_BASE_URL}/confirmar/{token}"
@@ -396,6 +401,18 @@ def _send_confirmation_email(name: str, destination: str, token: str) -> bool:
     </div>
     """
     try:
+        if resend_key:
+            response = httpx.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {resend_key}"},
+                json={"from": resend_from, "to": [destination],
+                      "subject": "Confirma tu cuenta en Realidáctica", "html": body},
+                timeout=15,
+            )
+            if not 200 <= response.status_code < 300:
+                app.logger.warning("El proveedor de correo rechazó el envío (HTTP %s)", response.status_code)
+                return False
+            return True
         message = MIMEMultipart("alternative")
         message["Subject"] = "Confirma tu cuenta en Realidáctica"
         message["From"] = f"Realidáctica <{GMAIL_USER}>"
@@ -405,8 +422,8 @@ def _send_confirmation_email(name: str, destination: str, token: str) -> bool:
             server.login(GMAIL_USER, GMAIL_PASS)
             server.sendmail(GMAIL_USER, destination, message.as_string())
         return True
-    except Exception:
-        app.logger.exception("No se pudo enviar el correo de confirmación")
+    except Exception as error:
+        app.logger.warning("No se pudo enviar el correo de confirmación (%s)", type(error).__name__)
         return False
 
 
